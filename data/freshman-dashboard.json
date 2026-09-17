@@ -1,0 +1,36 @@
+{
+  "title": "2026 新生画像",
+  "subtitle": "Freshman Snapshot",
+  "kpis": {
+    "totalStudents": 1432,
+    "majorCount": 8,
+    "regionCount": 7,
+    "checkInRate": 93.6
+  },
+  "majorGroups": [
+    { "id": "computer", "label": "计算机类" },
+    { "id": "intelligent", "label": "智能科学类" },
+    { "id": "automation", "label": "自动化类" },
+    { "id": "electronic", "label": "电子信息类" },
+    { "id": "math", "label": "数理类" }
+  ],
+  "majors": [
+    { "name": "人工智能", "shortName": "人工智能", "students": 214, "group": "intelligent", "completion": 94.2 },
+    { "name": "计算机科学与技术", "shortName": "计算机科学", "students": 238, "group": "computer", "completion": 92.8 },
+    { "name": "数据科学与大数据技术", "shortName": "数据科学", "students": 176, "group": "intelligent", "completion": 96.1 },
+    { "name": "软件工程", "shortName": "软件工程", "students": 206, "group": "computer", "completion": 91.6 },
+    { "name": "自动化", "shortName": "自动化", "students": 168, "group": "automation", "completion": 89.8 },
+    { "name": "电子信息工程", "shortName": "电子信息", "students": 170, "group": "electronic", "completion": 93.5 },
+    { "name": "数学与应用数学", "shortName": "数学", "students": 122, "group": "math", "completion": 97.2 },
+    { "name": "信息管理与信息系统", "shortName": "信息管理", "students": 138, "group": "math", "completion": 95.0 }
+  ],
+  "heatmap": [
+    { "region": "华东", "values": { "computer": 132, "intelligent": 110, "automation": 46, "electronic": 54, "math": 76 } },
+    { "region": "华北", "values": { "computer": 77, "intelligent": 66, "automation": 29, "electronic": 28, "math": 43 } },
+    { "region": "华中", "values": { "computer": 60, "intelligent": 52, "automation": 24, "electronic": 22, "math": 40 } },
+    { "region": "华南", "values": { "computer": 57, "intelligent": 48, "automation": 22, "electronic": 25, "math": 34 } },
+    { "region": "西南", "values": { "computer": 48, "intelligent": 42, "automation": 19, "electronic": 20, "math": 30 } },
+    { "region": "西北", "values": { "computer": 38, "intelligent": 34, "automation": 14, "electronic": 9, "math": 25 } },
+    { "region": "东北", "values": { "computer": 32, "intelligent": 38, "automation": 14, "electronic": 12, "math": 12 } }
+  ]
+}

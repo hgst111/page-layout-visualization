@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="可视化导论第六章：从诊断到重构，学习如何进行页面布局。"
+    />
+    <title>Chapter 06 — 如何进行页面布局</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232b3445'/%3E%3Cpath d='M16 17h32v7H16zm0 12h22v7H16zm0 12h32v7H16z' fill='%23e0a458'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/components.css?v=2" />
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js" defer></script>
+    <script src="js/i18n.js?v=6" defer></script>
+    <script src="js/dashboard.js?v=2" defer></script>
+    <script src="js/layout-xray.js?v=2" defer></script>
+    <script src="js/layout-principles.js" defer></script>
+    <script src="js/hierarchy-map.js" defer></script>
+    <script src="js/grouping-map.js" defer></script>
+    <script src="js/allocation-map.js" defer></script>
+    <script src="js/responsive-lab.js" defer></script>
+    <script src="js/layout-surgery.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
+    <script src="js/main.js" defer></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        window.lucide?.createIcons({ attrs: { "stroke-width": 1.7 } });
+      });
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="site-mark" href="#top" aria-label="返回章节开头">
+          <span>VIS</span>
+          <span class="site-mark-divider">/</span>
+          <span>CHAPTER 06</span>
+        </a>
+        <p class="header-topic">PAGE LAYOUT</p>
+        <div class="language-switch" role="group" aria-label="Language">
+          <button type="button" class="language-button is-active" data-language="zh" aria-pressed="true">中</button>
+          <button type="button" class="language-button" data-language="en" aria-pressed="false">EN</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="site-layout">
+      <aside class="chapter-nav" aria-label="章节导航">
+        <div class="nav-heading">
+          <span class="nav-label">ON THIS PAGE</span>
+          <span class="nav-count">06 parts</span>
+        </div>
+        <nav>
+          <ol class="chapter-list">
+            <li>
+              <a href="#diagnose" data-section-link="diagnose">
+                <span class="nav-number">01</span>
+                <span class="nav-copy">
+                  <strong>Diagnose</strong>
+                  <small>诊断布局</small>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a href="#hierarchy" data-section-link="hierarchy">
+                <span class="nav-number">02</span>
+                <span class="nav-copy">
+                  <strong>Hierarchy</strong>
+                  <small>视觉层级</small>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a href="#grouping" data-section-link="grouping">
+                <span class="nav-number">03</span>
+                <span class="nav-copy">
+                  <strong>Grouping</strong>
+                  <small>信息分组</small>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a href="#allocate" data-section-link="allocate">
+                <span class="nav-number">04</span>
+                <span class="nav-copy">
+                  <strong>Allocate</strong>
+                  <small>空间分配</small>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a href="#adapt" data-section-link="adapt">
+                <span class="nav-number">05</span>
+                <span class="nav-copy">
+                  <strong>Adapt</strong>
+                  <small>响应布局</small>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a href="#surgery" data-section-link="surgery">
+                <span class="nav-number">06</span>
+                <span class="nav-copy">
+                  <strong>Surgery</strong>
+                  <small>综合重构</small>
+                </span>
+              </a>
+            </li>
+          </ol>
+        </nav>
+      </aside>
+
+      <main id="top" class="main-content">
+        <section class="chapter-intro" aria-labelledby="chapter-title">
+          <p class="eyebrow">CHAPTER 06 <span>/</span> VISUALIZATION</p>
+          <h1 id="chapter-title">如何进行页面布局</h1>
+          <div class="hero-visual" aria-hidden="true">
+            <svg class="hero-visual-svg" viewBox="0 0 320 230" role="presentation">
+              <path class="hero-visual-axis" d="M28 22V208M28 190H296" />
+              <path class="hero-visual-guide" d="M28 86H296M178 22V208" />
+              <rect class="hero-visual-shape hero-visual-shape--violet" x="48" y="38" width="106" height="42" rx="2" />
+              <rect class="hero-visual-shape hero-visual-shape--teal" x="178" y="38" width="96" height="28" rx="2" />
+              <rect class="hero-visual-shape hero-visual-shape--coral" x="48" y="108" width="118" height="70" rx="2" />
+              <rect class="hero-visual-shape hero-visual-shape--neutral" x="194" y="98" width="80" height="80" rx="2" />
+              <rect class="hero-visual-nested" x="62" y="123" width="52" height="42" rx="1" />
+              <path class="hero-visual-connector" d="M154 59H178M166 143H194M226 66L234 98" />
+              <path class="hero-visual-boundary" d="M288 24V188" />
+              <path class="hero-visual-tick" d="M48 197V203M76 197V203M104 197V203M132 197V203M160 197V203M194 197V203M222 197V203M250 197V203" />
+              <circle class="hero-visual-dot hero-visual-dot--teal" cx="178" cy="86" r="3.5" />
+              <circle class="hero-visual-dot hero-visual-dot--coral" cx="166" cy="143" r="3.5" />
+              <circle class="hero-visual-dot hero-visual-dot--violet" cx="288" cy="188" r="3.5" />
+            </svg>
+          </div>
+          <p class="chapter-subtitle">Designing Page Layouts for Visualization</p>
+          <div class="intro-copy prose">
+            <p>
+              页面布局解决的，不只是元素放在哪里，而是<strong>信息关系</strong>应该以怎样的方式呈现给用户。
+            </p>
+            <p>
+              本章围绕同一个 <strong>Dashboard 案例</strong>，从一个数据和图表都没有明显问题、但页面关系混乱的状态出发，逐步建立更清晰的<strong>阅读路径</strong>。
+            </p>
+          </div>
+          <ol class="chapter-roadmap" aria-label="本章阅读逻辑">
+            <li>
+              <span class="roadmap-number">01</span>
+              <div class="roadmap-copy">
+                <i class="roadmap-icon" data-lucide="scan-line" aria-hidden="true"></i>
+                <strong>Diagnose</strong><span>把隐藏关系显式化</span>
+              </div>
+            </li>
+            <li>
+              <span class="roadmap-number">02</span>
+              <div class="roadmap-copy">
+                <i class="roadmap-icon" data-lucide="layers-3" aria-hidden="true"></i>
+                <strong>Reorganize</strong><span>重排层级、分组与空间</span>
+              </div>
+            </li>
+            <li>
+              <span class="roadmap-number">03</span>
+              <div class="roadmap-copy">
+                <i class="roadmap-icon" data-lucide="columns-3" aria-hidden="true"></i>
+                <strong>Adapt &amp; validate</strong><span>让结构适应并回到案例</span>
+              </div>
+            </li>
+          </ol>
+          <div class="intro-rule" aria-hidden="true"></div>
+        </section>
+
+        <section id="diagnose" class="chapter-section" aria-labelledby="diagnose-title">
+          <div class="section-heading">
+            <span class="section-motif section-motif--diagnose" aria-hidden="true"></span>
+            <p class="section-index">01 / DIAGNOSE</p>
+            <h2 id="diagnose-title">先看到问题，再决定修改</h2>
+          <p class="section-summary">诊断布局，意味着<strong>先观察页面关系</strong>，而不是立刻调整样式。</p>
+          </div>
+          <div class="prose section-copy">
+            <p>
+              <strong>先不要修改它</strong>。先观察这个页面：图表本身是否有错？如果没有，为什么阅读体验依然不清晰？
+            </p>
+            <article class="explanation-block">
+              <div class="concept-heading">
+                <i class="semantic-icon" data-lucide="scan-line" aria-hidden="true"></i>
+                <div>
+                  <p class="component-label">EXPLANATION</p>
+                  <h3>把隐藏的空间关系显式化</h3>
+                </div>
+              </div>
+              <p>
+                <strong>Layout X-Ray</strong> 不是在评价页面好不好看，而是把模块边界、对齐、间距、分组和<strong>预期阅读顺序</strong>变成可以直接观察的证据。
+              </p>
+              <p class="xray-principles"><strong>Bounds</strong> 看模块边界；<strong>Alignment</strong> 看共同边缘；<strong>Spacing</strong> 看空白距离；<strong>Groups</strong> 看语义分组；<strong>Reading order</strong> 看预期阅读路径。</p>
+            </article>
+            <article class="explanation-block principles-theory">
+              <p class="component-label">LAYOUT PRINCIPLES</p>
+              <h3>布局并不是“摆整齐”这么简单</h3>
+              <p>
+                页面布局至少要同时关注<strong>对齐、间距与层级</strong>、分组、平衡和<strong>响应约束</strong>。本章把这些准则分别连接到<strong>可观察的实验</strong>：Alignment、Spacing、Balance / Allocation 与 Responsive Constraints 已展开，Hierarchy 与 Grouping 则连接到后续的分析图。
+              </p>
+              <div class="axis-visual" role="img" aria-label="多个模块围绕共同轴线排列，其中一个模块偏离轴线">
+                <span class="axis-visual-line axis-visual-line--vertical" aria-hidden="true"></span>
+                <span class="axis-visual-line axis-visual-line--horizontal" aria-hidden="true"></span>
+                <span class="axis-visual-module axis-visual-module--one" aria-hidden="true"></span>
+                <span class="axis-visual-module axis-visual-module--two" aria-hidden="true"></span>
+                <span class="axis-visual-module axis-visual-module--three" aria-hidden="true"></span>
+                <span class="axis-visual-module axis-visual-module--offset" aria-hidden="true"></span>
+                <span class="axis-visual-caption" aria-hidden="true">shared axis / deviation</span>
+              </div>
+              <ul class="principles-map" aria-label="布局准则理论骨架">
+                <li><strong>Alignment</strong><span>共同边界与轴线 · 本轮展开</span></li>
+                <li><strong>Spacing</strong><span>有限、重复的间距尺度 · 本轮展开</span></li>
+                <li><strong>Hierarchy</strong><span>视觉重要性与显著性 · 02</span></li>
+                <li><strong>Grouping</strong><span>靠近、分隔与共同区域 · 03</span></li>
+                <li><strong>Balance / Allocation</strong><span>视觉重量与空间分配 · 04 · 本轮展开</span></li>
+                <li><strong>Responsive constraints</strong><span>可用空间与结构重组 · 05 · 本轮展开</span></li>
+              </ul>
+              <p class="method-note">好的对齐不要求所有内容排在同一条线上，而是让页面拥有有限、清晰、可识别的<strong>共同轴线</strong>。间距统一也不意味着所有 <strong>gap</strong> 相同。</p>
+            </article>
+          </div>
+
+          <div class="wide">
+            <section class="visual-stage principles-stage" aria-labelledby="principles-lab-title">
+              <div class="stage-toolbar">
+                <div>
+                  <span class="component-label">THEORY LAB</span>
+                  <span id="principles-lab-title" class="stage-name">Layout Principles Lab</span>
+                  <span class="principles-stage-subtitle">Alignment &amp; Spacing · abstract diagnostic models</span>
+                </div>
+              </div>
+
+              <div class="principles-canvas">
+                <p class="principles-intro">布局准则也可以被数据化：<strong>共同轴线</strong>可以转化为位置偏差，间距体系可以转化为<strong>gap sequence</strong>。</p>
+
+                <article id="alignment-lab" class="principles-experiment" aria-labelledby="alignment-lab-title">
+                  <div class="principles-experiment-heading">
+                    <div>
+                      <span class="panel-index">01</span>
+                      <h3 id="alignment-lab-title">Alignment Error Plot</h3>
+                    </div>
+                    <span class="panel-meta">POSITION DEVIATION</span>
+                  </div>
+                  <p class="principles-experiment-copy">相关元素应建立稳定、可识别的<strong>共同边界或轴线</strong>。噪声越大，元素越偏离所属的<strong>intended axis</strong>。</p>
+                  <div class="principles-controls">
+                    <label class="principles-range-control" for="alignment-noise">
+                      <span>Alignment noise <output id="alignment-noise-value" for="alignment-noise">8 units</output></span>
+                      <input id="alignment-noise" class="form-range" type="range" min="0" max="24" step="1" value="8" />
+                      <span class="principles-range-scale"><span>0</span><span>24 units</span></span>
+                    </label>
+                    <label class="form-check principles-deviation-toggle">
+                      <input id="alignment-deviations" class="form-check-input" type="checkbox" checked />
+                      <span class="form-check-label">Show deviations</span>
+                    </label>
+                    <button id="alignment-snap" class="stage-button" type="button">Snap to axes</button>
+                    <button id="alignment-reset" class="stage-button" type="button">Reset</button>
+                  </div>
+                  <div class="principles-chart-frame">
+                    <svg id="alignment-plot" class="principles-svg principles-alignment-svg" role="img" aria-labelledby="alignment-plot-title alignment-plot-desc">
+                      <title id="alignment-plot-title">Alignment Error Plot</title>
+                      <desc id="alignment-plot-desc">Twelve abstract elements distributed around three intended alignment axes.</desc>
+                    </svg>
+                  </div>
+                  <dl class="principles-metrics" aria-live="polite">
+                    <div><dt>Mean alignment deviation</dt><dd id="alignment-mean-deviation">3.8 units</dd></div>
+                    <div><dt>Active alignment axes</dt><dd id="alignment-axis-count">3</dd></div>
+                  </dl>
+                  <p id="alignment-insight" class="principles-insight" aria-live="polite">元素仍大致形成三组，但共同边界开始变得模糊。</p>
+                  <div class="principles-key-idea">
+                    <span class="component-label">KEY IDEA</span>
+                    <code>deviation = Math.abs(actualX - targetAxis);</code>
+                  </div>
+                </article>
+
+                <hr class="principles-divider" />
+
+                <article id="spacing-lab" class="principles-experiment" aria-labelledby="spacing-lab-title">
+                  <div class="principles-experiment-heading">
+                    <div>
+                      <span class="panel-index">02</span>
+                      <h3 id="spacing-lab-title">Spacing Rhythm</h3>
+                    </div>
+                    <span class="panel-meta">GAP SEQUENCE</span>
+                  </div>
+                  <p class="principles-experiment-copy">间距不必全部相同，但应该围绕<strong>有限、重复、可识别的尺度体系</strong>组织。8 / 16 / 24 / 32 是本教学实验的示例，不是所有网站的规定。</p>
+                  <div class="principles-controls principles-spacing-controls">
+                    <div class="principles-preset-group" aria-label="Spacing preset">
+                      <span class="principles-control-label">Preset</span>
+                      <button class="stage-button is-active" type="button" data-spacing-preset="irregular" aria-pressed="true">Irregular</button>
+                      <button class="stage-button" type="button" data-spacing-preset="systematic" aria-pressed="false">Systematic</button>
+                    </div>
+                    <label class="principles-range-control" for="spacing-consistency">
+                      <span>Rhythm consistency <output id="spacing-consistency-value" for="spacing-consistency">0%</output></span>
+                      <input id="spacing-consistency" class="form-range" type="range" min="0" max="100" step="1" value="0" />
+                      <span class="principles-range-scale"><span>0%</span><span>100%</span></span>
+                    </label>
+                  </div>
+                  <div class="principles-chart-frame principles-sequence-frame">
+                    <svg id="spacing-sequence" class="principles-svg principles-sequence-svg" role="img" aria-labelledby="spacing-sequence-title spacing-sequence-desc">
+                      <title id="spacing-sequence-title">Spacing Rhythm block sequence</title>
+                      <desc id="spacing-sequence-desc">Eight abstract blocks separated by adjustable gap values.</desc>
+                    </svg>
+                  </div>
+                  <div class="principles-chart-frame principles-gap-plot-frame">
+                    <svg id="spacing-gap-plot" class="principles-svg principles-gap-svg" role="img" aria-labelledby="spacing-gap-title spacing-gap-desc">
+                      <title id="spacing-gap-title">Gap Sequence Plot</title>
+                      <desc id="spacing-gap-desc">The seven gap values compared with the spacing scale 8, 16, 24 and 32.</desc>
+                    </svg>
+                  </div>
+                  <dl class="principles-metrics" aria-live="polite">
+                    <div><dt>Unique gap values</dt><dd id="spacing-unique-values">7</dd></div>
+                    <div><dt>Mean distance to spacing scale</dt><dd id="spacing-scale-distance">2.7 units</dd></div>
+                  </dl>
+                  <p id="spacing-insight" class="principles-insight" aria-live="polite">每个间距都像一次独立决定，页面很难形成稳定节奏。</p>
+                  <div class="principles-key-idea">
+                    <span class="component-label">KEY IDEA</span>
+                    <code>distanceToScale = Math.min(...spacingScale.map(value =&gt; Math.abs(gap - value)));</code>
+                  </div>
+                </article>
+
+                <aside class="principles-apply" aria-labelledby="principles-apply-title">
+                  <span class="component-label">APPLY TO CASE</span>
+                  <h3 id="principles-apply-title">抽象准则如何回到真实案例</h3>
+                  <p><strong>Alignment：</strong>Layout X-Ray 中的 alignment guides，正是在真实案例中寻找共同边界。</p>
+                  <p><strong>Spacing：</strong>Layout X-Ray 中的 spacing measurements，则用于观察页面是否形成稳定的间距节奏。</p>
+                  <p class="principles-apply-return">下面回到 Initial Dashboard。</p>
+                </aside>
+              </div>
+            </section>
+          </div>
+
+          <div class="prose section-copy">
+            <p class="transition-note">
+              前面的实验把对齐和间距转成了可观察变量；要把这些判断带回真实页面，还需要读取模块的<strong>实际边界和位置</strong>。
+            </p>
+            <div class="key-code">
+              <div class="code-header">
+                <span>layout-xray.js</span>
+                <span class="code-language">JavaScript</span>
+              </div>
+              <p class="code-purpose" data-i18n-key="code-purpose-layout-xray">读取真实模块的边界，把布局关系转成可以比较的坐标数据。</p>
+              <pre><code data-code-key="layout-xray">// 1. Measure the dashboard frame once.
+const dashboardRect = dashboard.getBoundingClientRect();
+
+// 2. Read each module's visible bounds.
+const modules = [...dashboard.querySelectorAll("[data-module-id]")]
+  .map((node) => {
+    const rect = node.getBoundingClientRect();
+
+    // Keep coordinates relative to the dashboard, not the viewport.
+    return {
+      id: node.dataset.moduleId,
+      x: rect.left - dashboardRect.left,
+      y: rect.top - dashboardRect.top,
+      width: rect.width,
+      height: rect.height
+    };
+  });</code></pre>
+              <p class="code-caption" data-i18n-key="code-caption-layout-xray">Why it matters：相对坐标把“看起来不齐”变成可以测量、比较的布局证据。</p>
+              <div class="code-guide" data-i18n-key="code-guide-layout-xray">阅读提示：先看相对坐标，再看这些坐标如何支持 Bounds、Alignment 和 Reading order。</div>
+            </div>
+          </div>
+          <div class="wide">
+            <div class="visual-stage dashboard-stage" data-stage="diagnose" data-module-id="dashboard" data-module-label="初始 Dashboard">
+              <div class="stage-toolbar">
+                <div>
+                  <span class="component-label">INTERACTIVE DEMO</span>
+                  <span class="stage-name">Initial Dashboard</span>
+                </div>
+                <div class="xray-toolbar-controls">
+                  <span class="dashboard-case-label">CASE / INITIAL STATE</span>
+                  <button id="xray-toggle" class="stage-button xray-toggle" type="button" aria-pressed="false">X-Ray</button>
+                  <fieldset id="xray-options" class="xray-options" disabled>
+                    <legend class="visually-hidden">Layout X-Ray layers</legend>
+                    <label class="xray-option"><input id="xray-bounds" type="checkbox" checked /> <span>Bounds</span></label>
+                    <label class="xray-option"><input id="xray-alignment" type="checkbox" /> <span>Alignment</span></label>
+                    <label class="xray-option"><input id="xray-spacing" type="checkbox" /> <span>Spacing</span></label>
+                    <label class="xray-option"><input id="xray-groups" type="checkbox" /> <span>Groups</span></label>
+                    <label class="xray-option"><input id="xray-reading-order" type="checkbox" /> <span>Reading order</span></label>
+                  </fieldset>
+                  <button id="xray-reset" class="stage-button" type="button">Reset</button>
+                </div>
+              </div>
+              <aside id="xray-inspect" class="xray-inspect-panel" hidden>
+                <span class="xray-inspect-label">INSPECT</span>
+                <span id="xray-inspect-content">Hover a module to inspect its layout.</span>
+              </aside>
+              <div class="dashboard-canvas">
+                <div class="dashboard-shell" data-dashboard-instance="initial">
+                  <header id="dashboard-header" class="dashboard-header" data-module-id="dashboard-header" data-module-label="Dashboard 标题">
+                    <div>
+                      <p class="dashboard-kicker">FRESHMAN SNAPSHOT</p>
+                      <h3>2026 新生画像</h3>
+                      <p class="dashboard-subtitle">Freshman Snapshot</p>
+                    </div>
+                    <p class="dashboard-meta">Illustrative data<br />示例数据</p>
+                  </header>
+
+                  <form id="filters" class="dashboard-filters" data-module-id="filters" data-module-label="筛选器">
+                    <div class="filter-field">
+                      <label for="dashboard-region">Region</label>
+                      <select id="dashboard-region" name="region">
+                        <option value="all">All regions / 全部地区</option>
+                        <option value="华东">华东</option>
+                        <option value="华北">华北</option>
+                        <option value="华中">华中</option>
+                        <option value="华南">华南</option>
+                        <option value="西南">西南</option>
+                        <option value="西北">西北</option>
+                        <option value="东北">东北</option>
+                      </select>
+                    </div>
+                    <div class="filter-field">
+                      <label for="dashboard-major-group">Major group</label>
+                      <select id="dashboard-major-group" name="majorGroup">
+                        <option value="all">All groups / 全部专业大类</option>
+                        <option value="computer">计算机类</option>
+                        <option value="intelligent">智能科学类</option>
+                        <option value="automation">自动化类</option>
+                        <option value="electronic">电子信息类</option>
+                        <option value="math">数理类</option>
+                      </select>
+                    </div>
+                    <p id="dashboard-filter-status" class="filter-status" aria-live="polite">当前视图：全部地区 · 全部专业大类</p>
+                  </form>
+
+                  <div class="dashboard-kpis">
+                    <article id="kpi-total" class="dashboard-kpi dashboard-kpi--primary" data-module-id="kpi-total" data-module-label="新生总数">
+                      <span>新生总数</span>
+                      <strong id="metric-total">1,432</strong>
+                      <small id="metric-total-note">All regions</small>
+                    </article>
+                    <article id="kpi-major" class="dashboard-kpi dashboard-kpi--offset" data-module-id="kpi-major" data-module-label="专业数量">
+                      <span>专业数量</span>
+                      <strong id="metric-major">8</strong>
+                      <small>undergraduate majors</small>
+                    </article>
+                    <article id="kpi-region" class="dashboard-kpi" data-module-id="kpi-region" data-module-label="生源区域数量">
+                      <span>生源区域</span>
+                      <strong id="metric-region">7</strong>
+                      <small id="metric-region-note">regions represented</small>
+                    </article>
+                    <article id="kpi-checkin" class="dashboard-kpi dashboard-kpi--narrow" data-module-id="kpi-checkin" data-module-label="准备完成率">
+                      <span>准备完成率</span>
+                      <strong id="metric-checkin">93.4%</strong>
+                      <small>registration readiness</small>
+                    </article>
+                  </div>
+
+                  <div class="dashboard-visual-grid">
+                    <article id="chart-major" class="dashboard-panel dashboard-panel--major" data-module-id="chart-major" data-module-label="专业构成">
+                      <div class="panel-heading">
+                        <div>
+                          <span class="panel-index">01</span>
+                          <h4>专业构成</h4>
+                        </div>
+                        <span class="panel-meta">STUDENTS</span>
+                      </div>
+                      <div id="major-treemap" class="chart-host" data-dashboard-chart="treemap" aria-label="专业人数 Treemap"></div>
+                    </article>
+
+                    <article id="chart-progress" class="dashboard-panel dashboard-panel--progress" data-module-id="chart-progress" data-module-label="入学准备完成度">
+                      <div class="panel-heading">
+                        <div>
+                          <span class="panel-index">03</span>
+                          <h4>入学准备完成度</h4>
+                        </div>
+                        <span class="panel-meta">PERCENT</span>
+                      </div>
+                      <div id="progress-dotplot" class="chart-host" data-dashboard-chart="dotplot" aria-label="各专业入学准备完成度 Dot Plot"></div>
+                    </article>
+
+                    <article id="chart-region" class="dashboard-panel dashboard-panel--region" data-module-id="chart-region" data-module-label="地区与专业大类">
+                      <div class="panel-heading">
+                        <div>
+                          <span class="panel-index">02</span>
+                          <h4>生源地区 × 专业大类</h4>
+                        </div>
+                        <span class="panel-meta">STUDENTS</span>
+                      </div>
+                      <div class="dashboard-heatmap-body">
+                        <div id="region-heatmap" class="chart-host" data-dashboard-chart="heatmap" aria-label="地区与专业大类 Heatmap"></div>
+                        <aside id="legend-region" class="dashboard-legend" data-module-id="legend-region" data-module-label="地区图例">
+                          <span class="legend-title">人数密度</span>
+                          <div id="region-legend-scale" class="legend-scale" aria-hidden="true"></div>
+                          <div class="legend-values"><span id="legend-min">0</span><span id="legend-max">—</span></div>
+                          <p>颜色越深，代表该组合中的示例人数越多。</p>
+                        </aside>
+                      </div>
+                    </article>
+                  </div>
+
+                  <aside id="dashboard-note" class="dashboard-note" data-module-id="dashboard-note" data-module-label="Dashboard 说明">
+                    <span class="dashboard-note-label">READING NOTE</span>
+                    <p>数据本身并没有明显错误，但标题、指标、图表与图例之间的空间关系还没有形成清晰的阅读顺序。</p>
+                  </aside>
+                  <div id="dashboard-error" class="dashboard-error" role="status" hidden></div>
+                  <svg id="dashboard-xray-overlay" class="dashboard-xray-overlay" aria-hidden="true" preserveAspectRatio="none"></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="transition-note section-transition">
+            Initial Dashboard 的问题不是数据错误，而是模块之间的关系没有形成稳定的阅读顺序；下一步先判断哪些信息应该获得更多视觉显著性。
+          </p>
+        </section>
+
+        <section id="hierarchy" class="chapter-section" aria-labelledby="hierarchy-title">
+          <div class="section-heading">
+            <span class="section-motif section-motif--hierarchy" aria-hidden="true"></span>
+            <p class="section-index">02 / HIERARCHY</p>
+            <h2 id="hierarchy-title">让页面先回答“看什么”</h2>
+          <p class="section-summary"><strong>视觉层级</strong>把内容的重要程度，转化成可被感知的差异。</p>
+          </div>
+          <div class="prose section-copy">
+            <p>
+              <strong>视觉层级</strong>的目标不是让所有内容一样显眼，而是让重要信息获得合适的面积、位置或<strong>视觉显著性</strong>。布局出现问题时，常见的并不是图表错误，而是信息重要性与视觉显著性没有匹配。
+            </p>
+            <p>
+              下面的 <strong>Importance–Prominence Map</strong> 使用模块的语义重要程度和当前布局的可观察特征进行比较。<strong>Prominence</strong> 是一个透明的 layout prominence proxy：它不是眼动实验结果，也不是严格的人类视觉模型。
+            </p>
+            <div class="comparison-strip" aria-label="层级判断的两个维度">
+              <div>
+                <div class="graphic-visual graphic-visual--hierarchy-weight" aria-hidden="true">
+                  <span></span><span></span><span></span><span></span>
+                </div>
+                <span class="comparison-label"><i class="semantic-icon" data-lucide="layers-3" aria-hidden="true"></i>SEMANTIC IMPORTANCE</span>
+                <strong>内容本身有多重要</strong>
+                <span>由角色、任务和阅读目的决定。</span>
+              </div>
+              <div>
+                <div class="graphic-visual graphic-visual--hierarchy-prominence" aria-hidden="true">
+                  <span></span><span></span><span></span><span></span>
+                </div>
+                <span class="comparison-label">LAYOUT PROMINENCE</span>
+                <strong>页面让它有多显眼</strong>
+                <span>由面积、位置和空间关系共同形成。</span>
+              </div>
+            </div>
+            <p class="transition-note">
+              两者不一致时，问题不在于“重要性算错了”，而在于布局没有把判断结果转译成可感知的差异。
+            </p>
+            <div class="key-code">
+              <div class="code-header">
+                <span>hierarchy-map.js</span>
+                <span class="code-language">JavaScript</span>
+              </div>
+              <p class="code-purpose" data-i18n-key="code-purpose-hierarchy">用面积与垂直位置构造一个透明的 layout prominence proxy。</p>
+              <pre><code data-code-key="hierarchy-map">// Area is converted into a comparable visual signal.
+const areaValue = Math.sqrt(rect.width * rect.height);
+const areaScore = normalize(areaValue, minArea, maxArea);
+
+// Earlier modules receive a small position advantage.
+const positionScore = 1 - rect.y / layoutHeight;
+const prominence = 1 + 9 * (
+  0.65 * areaScore + 0.35 * positionScore
+);</code></pre>
+              <p class="code-caption" data-i18n-key="code-caption-hierarchy">Why it matters：这个代理模型让“重要性”和“页面是否让它足够显眼”之间的差异可以被检查。</p>
+              <div class="code-guide" data-i18n-key="code-guide-hierarchy">阅读提示：关注 areaScore 与 positionScore 如何共同影响显著性；它不是眼动预测。</div>
+            </div>
+            <p class="method-note"><strong>教学代理模型：</strong>面积更大、位置更靠上，通常会形成更多<strong>布局显著性</strong>。这个简化公式用于让抽象概念可以被观察，不用于预测真实注意力。</p>
+          </div>
+          <div class="wide">
+            <div class="visual-stage hierarchy-stage" data-stage="hierarchy">
+              <div class="stage-toolbar">
+                <div>
+                  <span class="component-label">INTERACTIVE DEMO</span>
+                  <span class="stage-name">Importance–Prominence Map</span>
+                </div>
+                <div class="stage-actions">
+                  <button id="hierarchy-reset" class="stage-button" type="button">Reset</button>
+                </div>
+              </div>
+              <div class="hierarchy-canvas">
+                <div class="hierarchy-visual-grid">
+                  <div class="importance-map-panel">
+                    <div class="hierarchy-panel-heading">
+                      <div>
+                        <span class="panel-index">01</span>
+                        <h3>Importance–Prominence Map</h3>
+                      </div>
+                      <span class="panel-meta">ANALYSIS PROXY</span>
+                    </div>
+                    <div id="importance-map" class="hierarchy-chart-host" aria-label="Information Importance 与 Visual Prominence 散点图"></div>
+                    <div class="hierarchy-legend" aria-label="散点图图例">
+                      <span><i class="legend-dot legend-dot--kpi"></i>KPI</span>
+                      <span><i class="legend-dot legend-dot--visualization"></i>Visualization</span>
+                      <span><i class="legend-dot legend-dot--annotation"></i>Legend / Annotation</span>
+                    </div>
+                  </div>
+                  <div class="hierarchy-support-panel">
+                    <div class="hierarchy-panel-heading">
+                      <div>
+                        <span class="panel-index">02</span>
+                        <h3>Layout Minimap</h3>
+                      </div>
+                      <span id="grouping-spatial-meta" class="panel-meta">CURRENT DOM</span>
+                    </div>
+                    <div id="layout-minimap" class="minimap-host" aria-label="Dashboard 当前布局 Minimap"></div>
+                    <p class="minimap-caption">模块位置按当前 Dashboard 的真实 bounding boxes 缩放。</p>
+                    <div id="hierarchy-detail" class="hierarchy-detail" aria-live="polite">
+                      <span class="detail-label">DETAIL</span>
+                      <p>Hover a point or module to inspect its layout.</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="mismatch-panel">
+                  <div class="mismatch-heading">
+                    <div>
+                      <span class="panel-index">03</span>
+                      <h3>Largest mismatches</h3>
+                    </div>
+                    <span class="panel-meta">TOP 3 · TEACHING DEMO</span>
+                  </div>
+                  <ol id="mismatch-ranking" class="mismatch-list"></ol>
+                </div>
+                <p class="hierarchy-footnote">Gap = Prominence − Importance。阈值仅用于本教学示例：低于 −1 为突出不足，高于 1 为过度突出，其余视为基本匹配。</p>
+              </div>
+            </div>
+          </div>
+          <p class="transition-note section-transition">
+            层级回答了“先看什么”，但还没有回答“哪些内容应该一起看”；因此下一节把语义关系继续翻译为空间关系。
+          </p>
+        </section>
+
+        <section id="grouping" class="chapter-section" aria-labelledby="grouping-title">
+          <div class="section-heading">
+            <span class="section-motif section-motif--grouping" aria-hidden="true"></span>
+            <p class="section-index">03 / GROUPING</p>
+            <h2 id="grouping-title">把信息关系变成空间关系</h2>
+          <p class="section-summary">靠近、分隔和对齐，会让相关信息自然形成一组。</p>
+          </div>
+          <div class="prose section-copy">
+            <p>
+              分组不是给每一个模块都加一个容器，而是让相关内容共享<strong>边界、节奏或起点</strong>。当空间关系足够清楚时，用户就不必依赖额外的说明文字来理解结构。
+            </p>
+            <p>
+              本节把 Dashboard 的语义关系映射成 <strong>proximity、common region 和 alignment</strong>，再与真实页面中的空间距离进行比较。强关系如果在页面上相距很远，就可能形成值得检查的分组问题。
+            </p>
+            <div class="concept-strip" aria-label="分组判断的三个空间线索">
+              <div>
+                <div class="graphic-visual graphic-visual--proximity" aria-hidden="true"><span></span><span></span><span></span><i></i></div>
+                <strong>Proximity</strong><span>相关内容靠近，减少寻找成本。</span>
+              </div>
+              <div>
+                <div class="graphic-visual graphic-visual--region" aria-hidden="true"><span></span><span></span><span></span></div>
+                <strong><i class="semantic-icon" data-lucide="folder-tree" aria-hidden="true"></i>Common region</strong><span>共享边界，提示属于同一组。</span>
+              </div>
+              <div>
+                <div class="graphic-visual graphic-visual--axis" aria-hidden="true"><span></span><span></span><span></span><i></i></div>
+                <strong>Alignment</strong><span>共享起点或轴线，保持结构稳定。</span>
+              </div>
+            </div>
+            <aside class="teaching-note">
+              <span class="teaching-note-mark">NOTE</span>
+              <p><strong>先决定哪些内容应该一起被阅读</strong>，再决定它们应该使用什么视觉样式。这里的距离阈值只服务于本教学案例，不是通用设计规则。</p>
+            </aside>
+            <p class="transition-note">
+              文字可以列举关系，却不容易让人看出关系是否真的落在同一片空间里；下面的图把<strong>语义连线与真实距离</strong>并置起来。
+            </p>
+            <div class="key-code">
+              <div class="code-header">
+                <span>grouping-map.js</span>
+                <span class="code-language">JavaScript</span>
+              </div>
+              <p class="code-purpose" data-i18n-key="code-purpose-grouping">把两个模块中心之间的空间距离转成可检查的 proximity 信号。</p>
+              <pre><code data-code-key="grouping-map">// Compare the centers of two related modules.
+const dx = a.centerX - b.centerX;
+const dy = a.centerY - b.centerY;
+// Euclidean distance makes the relationship spatially explicit.
+const distance = Math.hypot(dx, dy);</code></pre>
+              <p class="code-caption" data-i18n-key="code-caption-grouping">Why it matters：中心距离提供了空间证据，但不会把“靠近”误当成唯一的语义判断。</p>
+              <div class="code-guide" data-i18n-key="code-guide-grouping">阅读提示：距离越大，不代表关系越弱；它说明语义关系与空间关系之间值得检查。</div>
+            </div>
+          </div>
+          <div class="wide">
+            <div class="visual-stage grouping-stage" data-stage="grouping">
+              <div class="stage-toolbar">
+                <div>
+                  <span class="component-label">INTERACTIVE DEMO</span>
+                  <span class="stage-name">Information Relationship Graph</span>
+                </div>
+                <div class="stage-actions">
+                  <span id="grouping-state" class="stage-status">CURRENT</span>
+                  <button id="grouping-reset" class="stage-button" type="button">Reset</button>
+                  <button id="grouping-reorganize" class="stage-button" type="button">Reorganize</button>
+                </div>
+              </div>
+              <div class="grouping-canvas">
+                <div class="grouping-visual-grid">
+                  <section class="relationship-graph-panel" aria-labelledby="relationship-graph-title">
+                    <div class="grouping-panel-heading">
+                      <div>
+                        <span class="panel-index">01</span>
+                        <h3 id="relationship-graph-title">Information Relationship Graph</h3>
+                      </div>
+                      <span class="panel-meta">SEMANTIC LINKS</span>
+                    </div>
+                    <div id="relationship-graph" class="relationship-graph-host" aria-label="Dashboard 信息关系图"></div>
+                    <div class="relationship-legend" aria-label="关系类型图例">
+                      <span><i class="relationship-key relationship-key--overview"></i>Overview</span>
+                      <span><i class="relationship-key relationship-key--supports"></i>Supports</span>
+                      <span><i class="relationship-key relationship-key--controls"></i>Controls</span>
+                      <span><i class="relationship-key relationship-key--explains"></i>Explains</span>
+                    </div>
+                  </section>
+                  <section class="spatial-layout-panel" aria-labelledby="spatial-layout-title">
+                    <div class="grouping-panel-heading">
+                      <div>
+                        <span class="panel-index">02</span>
+                        <h3 id="spatial-layout-title">Spatial Layout View</h3>
+                      </div>
+                      <span class="panel-meta">CURRENT DOM</span>
+                    </div>
+                    <div id="spatial-layout" class="spatial-layout-host" aria-label="Dashboard 空间关系视图"></div>
+                    <p class="spatial-caption">Current 使用真实 Dashboard bounding boxes；Grouped 是一种更符合语义分组的布局方案。</p>
+                  </section>
+                </div>
+                <div id="grouping-detail" class="grouping-detail" aria-live="polite">
+                  <span class="detail-label">RELATIONSHIP TO INSPECT</span>
+                  <p>地区与专业大类 ↔ 地区图例 · Strong · Spatial distance: Far · 关系紧密，但空间分组较弱。</p>
+                </div>
+                <p id="grouping-summary" class="grouping-summary" aria-live="polite"></p>
+                <p class="grouping-footnote">Grouped state 只是“一种更符合语义分组的布局方案”，不是系统自动生成的最优布局。Reorganize 只作用于本节 Spatial Layout View，不会修改上方 Initial Dashboard。</p>
+              </div>
+            </div>
+          </div>
+          <p class="transition-note section-transition">
+            Graph 区分了“应该相关”和“当前靠得近”这两件事；当关系被确认后，还要决定有限空间应该优先给谁。
+          </p>
+        </section>
+
+        <section id="allocate" class="chapter-section" aria-labelledby="allocate-title">
+          <div class="section-heading">
+            <span class="section-motif section-motif--allocate" aria-hidden="true"></span>
+            <p class="section-index">04 / ALLOCATE</p>
+            <h2 id="allocate-title">为不同信息分配不同空间</h2>
+          <p class="section-summary">页面空间是一种<strong>有限资源</strong>，分配方式会直接表达<strong>优先级</strong>。</p>
+          </div>
+          <div class="prose section-copy">
+            <p>
+              先确定页面中必须被<strong>快速扫描</strong>的区域，再安排需要深入阅读的内容。宽度、留白和模块面积都可以成为一种无声的提示，帮助用户建立稳定的<strong>阅读路径</strong>。
+            </p>
+            <p>
+              Treemap 在这里借用“把权重映射到有限矩形面积”的视觉思想，把页面看成一笔固定的<strong>空间预算</strong>。它是帮助我们观察分配关系的概念模型，不是网页自动布局算法；<strong>信息重要性</strong>越高，也不意味着它必须占据同等倍数的面积。
+            </p>
+            <div class="causal-chain" aria-label="空间分配如何影响阅读路径">
+              <div>
+                <div class="graphic-visual graphic-visual--allocation" aria-hidden="true"><span></span><span></span><span></span></div>
+                <span>01</span><strong>空间预算</strong><small>可用面积有限</small>
+              </div>
+              <div>
+                <div class="graphic-visual graphic-visual--weight" aria-hidden="true"><span></span><span></span><span></span></div>
+                <span>02</span><strong>视觉权重</strong><small>大小与位置传达优先级</small>
+              </div>
+              <div>
+                <div class="graphic-visual graphic-visual--path" aria-hidden="true"><span></span><span></span><span></span><i></i></div>
+                <span>03</span><strong>阅读路径</strong><small>用户更快找到重点</small>
+              </div>
+            </div>
+            <aside class="teaching-note">
+              <span class="teaching-note-mark">NOTE</span>
+              <p>真实页面还要同时满足图表宽度、内容密度、控件固定空间和<strong>最小可读尺寸</strong>。Dashboard 的 filters 保持为顶部固定控制条，不进入主体面积分配。下面的 <strong>Importance influence</strong> 只是一个教学极端，用来观察当重要性逐渐影响面积时会发生什么。</p>
+            </aside>
+            <p class="transition-note">
+              这条因果链说明了为什么“<strong>面积</strong>”不是单纯的美化参数；下面的代码和 Treemap 只负责呈现空间结果，<strong>权重</strong>仍然需要由设计者定义。
+            </p>
+            <div class="key-code">
+              <div class="code-header">
+                <span>allocation-map.js</span>
+                <span class="code-language">JavaScript</span>
+              </div>
+              <p class="code-purpose" data-i18n-key="code-purpose-allocation">混合当前占地与信息重要性，再把结果交给 Treemap 映射为空间。</p>
+              <pre><code data-code-key="allocation-map">// Blend the current footprint with a design decision.
+const weight =
+  (1 - alpha) * currentWeight +
+  alpha * importanceWeight;
+
+// The hierarchy carries those weights into rectangular areas.
+const root = d3.hierarchy(data)
+  .sum(d =&gt; d.weight);
+
+// Padding keeps neighboring semantic groups legible.
+d3.treemap()
+  .size([width, height])
+  .paddingInner(8)(root);</code></pre>
+              <p class="code-caption">D3 负责把权重映射为空间，但权重如何定义仍然是设计决策。</p>
+              <div class="code-guide" data-i18n-key="code-guide-allocation">阅读提示：先看 weight 的来源，再看 size 与 padding 如何把判断转成面积和分组。</div>
+            </div>
+          </div>
+          <div class="wide">
+            <section class="visual-stage balance-stage" aria-labelledby="balance-lab-title">
+              <div class="stage-toolbar">
+                <div>
+                  <span class="component-label">THEORY LAB</span>
+                  <span id="balance-lab-title" class="stage-name">Visual Balance Lab</span>
+                  <span class="balance-stage-subtitle">Position × visual weight · abstract field model</span>
+                </div>
+                <div class="stage-actions">
+                  <span id="balance-state" class="stage-status">BALANCED ASYMMETRIC</span>
+                  <button id="balance-reset" class="stage-button" type="button">Reset</button>
+                </div>
+              </div>
+
+              <div class="balance-canvas">
+                <p class="balance-intro"><strong>平衡不等于左右镜像</strong>。不同<strong>视觉重量</strong>在二维空间中的分布，可以形成相对稳定的整体关系；这个实验只隔离 position 与 area / visual weight 两个变量。</p>
+
+                <div class="balance-controls" aria-label="Visual balance controls">
+                  <div class="balance-preset-group" role="group" aria-label="Balance presets">
+                    <span class="balance-control-label">PRESET</span>
+                    <button class="stage-button balance-preset" type="button" data-balance-preset="symmetric" aria-pressed="false">Symmetric</button>
+                    <button class="stage-button balance-preset is-active" type="button" data-balance-preset="balanced" aria-pressed="true">Balanced asymmetric</button>
+                    <button class="stage-button balance-preset" type="button" data-balance-preset="unbalanced" aria-pressed="false">Unbalanced</button>
+                  </div>
+                  <div class="balance-selection" aria-live="polite">
+                    <span class="balance-control-label">SELECTED MARK</span>
+                    <strong id="balance-selected-mark">C</strong>
+                    <span class="balance-control-label">VISUAL WEIGHT</span>
+                    <output id="balance-selected-weight" for="balance-weight">6</output>
+                  </div>
+                  <label class="balance-weight-control" for="balance-weight">
+                    <span>Weight <output id="balance-weight-value" for="balance-weight">6</output></span>
+                    <input id="balance-weight" class="form-range" type="range" min="1" max="10" step="1" value="6" />
+                    <span class="balance-range-scale"><span>1</span><span>10</span></span>
+                  </label>
+                  <label class="form-check balance-trail-toggle">
+                    <input id="balance-trail" class="form-check-input" type="checkbox" checked />
+                    <span class="form-check-label">Show trail</span>
+                  </label>
+                </div>
+
+                <div class="balance-field-frame">
+                  <svg id="balance-field" class="balance-svg" role="img" aria-labelledby="balance-field-title balance-field-desc">
+                    <title id="balance-field-title">Visual Balance Field</title>
+                    <desc id="balance-field-desc">Six abstract weighted circles, a geometric center, a visual center of mass and a balance vector.</desc>
+                  </svg>
+                </div>
+
+                <dl class="principles-metrics balance-metrics" aria-live="polite">
+                  <div><dt>Visual center</dt><dd id="balance-visual-center">(50.0, 52.2)</dd></div>
+                  <div><dt>Balance offset</dt><dd id="balance-offset">2.2 units</dd></div>
+                  <div><dt>Total visual weight</dt><dd id="balance-total-weight">14</dd></div>
+                </dl>
+                <p id="balance-insight" class="principles-insight balance-insight" aria-live="polite">非对称并不意味着失衡，不同视觉重量仍可以形成稳定关系。</p>
+
+                <aside class="balance-model-note">
+                  <span class="component-label">MODEL LIMITATION</span>
+                  <p><strong>Visual Center of Mass</strong> 只是教学模型，不是自动判断页面好坏的规则。真实页面的<strong>视觉重量</strong>还会受到 color、contrast、typography 与 content complexity 影响。</p>
+                </aside>
+
+                <div class="principles-key-idea balance-key-idea">
+                  <span class="component-label">KEY IDEA</span>
+                  <code>const cx = d3.sum(nodes, d =&gt; d.weight * d.x) / d3.sum(nodes, d =&gt; d.weight);</code>
+                  <span class="balance-key-idea-caption">Position × visual weight → visual center of mass</span>
+                </div>
+
+                <div class="balance-to-allocation">
+                  <span class="component-label">FROM BALANCE TO ALLOCATION</span>
+                  <p>改变一个元素的面积，不仅改变它自身获得的空间，也会改变整个画面的<strong>视觉重量分布</strong>。因此，页面空间分配还需要考虑这些空间共同形成的<strong>整体平衡</strong>。</p>
+                  <p class="balance-to-allocation-next"><i class="semantic-icon" data-lucide="layout-grid" aria-hidden="true"></i>下面进入 Page Allocation Map。</p>
+                </div>
+              </div>
+            </section>
+          </div>
+          <div class="wide">
+            <div class="visual-stage allocation-stage" data-stage="allocate">
+              <div class="stage-toolbar">
+                <div>
+                  <span class="component-label">INTERACTIVE DEMO</span>
+                  <span class="stage-name">Page Allocation Map</span>
+                </div>
+                <div class="stage-actions">
+                  <span id="allocation-state" class="stage-status">CURRENT SPACE</span>
+                  <button id="allocation-reset" class="stage-button" type="button">Reset</button>
+                </div>
+              </div>
+              <div class="allocation-canvas">
+                <div class="allocation-controls" aria-label="Page allocation controls">
+                  <div class="allocation-control-copy">
+                    <span class="component-label">SPACE MODEL</span>
+                    <label for="allocation-influence">Importance influence <output id="allocation-influence-value" for="allocation-influence">0%</output></label>
+                    <p id="allocation-summary" aria-live="polite">The map preserves current footprint proportions.</p>
+                  </div>
+                  <input id="allocation-influence" class="allocation-slider" type="range" min="0" max="100" step="1" value="0" />
+                  <div class="allocation-presets" role="group" aria-label="Allocation presets">
+                    <button type="button" class="allocation-preset is-active" data-allocation-preset="current" aria-pressed="true">Current</button>
+                    <button type="button" class="allocation-preset" data-allocation-preset="balanced" aria-pressed="false">Balanced</button>
+                    <button type="button" class="allocation-preset" data-allocation-preset="importance" aria-pressed="false">Importance</button>
+                  </div>
+                  <div class="allocation-budget" aria-label="Space budget 100 percent"><span>SPACE BUDGET</span><strong>100%</strong></div>
+                </div>
+                <div class="allocation-map-layout">
+                  <section class="allocation-map-panel" aria-labelledby="allocation-map-title">
+                    <div class="allocation-panel-heading">
+                      <div>
+                        <span class="panel-index">01</span>
+                        <h3 id="allocation-map-title">Page Allocation Map</h3>
+                      </div>
+                      <span class="panel-meta">WEIGHT → AREA</span>
+                    </div>
+                    <div id="allocation-map" class="allocation-map-host" aria-label="页面模块空间分配 Treemap"></div>
+                    <p class="allocation-map-caption">语义组保持可见，模块面积随 Current footprint 与 Information importance 的混合权重变化。</p>
+                  </section>
+                  <aside id="allocation-detail" class="allocation-detail" aria-live="polite">
+                    <span class="detail-label">SELECTED MODULE</span>
+                    <h3 id="allocation-detail-title">Select a module</h3>
+                    <p id="allocation-detail-copy">Click a rectangle to compare its current footprint with its allocated area.</p>
+                    <dl class="allocation-detail-list">
+                      <div><dt>Current footprint</dt><dd id="allocation-current-value">—</dd></div>
+                      <div><dt>Information importance</dt><dd id="allocation-importance-value">—</dd></div>
+                      <div><dt>Allocated area</dt><dd id="allocation-allocated-value">—</dd></div>
+                      <div><dt>Change</dt><dd id="allocation-change-value">—</dd></div>
+                    </dl>
+                  </aside>
+                </div>
+                <div class="allocation-bridge" aria-label="CSS Grid bridge">
+                  <div>
+                    <span class="detail-label">CSS BRIDGE</span>
+                    <strong>Design decision → space ratio → CSS Grid</strong>
+                  </div>
+                  <div class="allocation-ratio"><span>Main</span><b>2 : 1</b><span>Side</span></div>
+                  <code>grid-template-columns: 2fr 1fr;</code>
+                </div>
+                <p class="allocation-floor-note">Minimum readable area keeps low-weight modules such as legend and note interactive. It is a readability floor, not a design rule.</p>
+              </div>
+            </div>
+          </div>
+          <p class="transition-note section-transition">
+            分配解决了桌面空间里的<strong>优先级</strong>，但可用空间会继续变化；下一节要判断什么时候应该缩放，什么时候必须<strong>重排</strong>。
+          </p>
+        </section>
+
+        <section id="adapt" class="chapter-section" aria-labelledby="adapt-title">
+          <div class="section-heading">
+            <span class="section-motif section-motif--adapt" aria-hidden="true"></span>
+            <p class="section-index">05 / ADAPT</p>
+            <h2 id="adapt-title">让结构适应屏幕，而不是缩小一切</h2>
+          <p class="section-summary"><strong>响应式布局</strong>的重点，是保护<strong>信息关系</strong>在不同尺寸下仍然成立。</p>
+          </div>
+          <div class="prose section-copy">
+            <p>
+              当屏幕变窄时，布局需要<strong>重新做取舍</strong>：哪些内容保持并列，哪些内容转为纵向，哪些辅助信息可以暂时退后。好的适配会改变空间组织，但不会破坏页面的<strong>核心判断路径</strong>。
+            </p>
+            <p>
+              <strong>Resize</strong> 是在相同拓扑中调整尺寸；<strong>Reflow</strong> 则是在可用空间不足时重新组织列数、顺序和分组。下面的 Responsive Viewport Lab 使用具体的教学阈值来演示这个过程，它们不是通用设备标准。
+            </p>
+            <div class="comparison-strip comparison-strip--adapt" aria-label="Resize 与 Reflow 的区别">
+              <div>
+                <div class="graphic-visual graphic-visual--resize" aria-hidden="true"><span></span><span></span><span></span></div>
+                <span class="comparison-label">RESIZE</span>
+                <strong>结构不变，尺寸调整</strong>
+                <span>同一组关系在更宽或更窄的空间中重新分配。</span>
+              </div>
+              <div>
+                <div class="graphic-visual graphic-visual--reflow" aria-hidden="true"><span></span><span></span><span></span><i></i></div>
+                <span class="comparison-label"><i class="semantic-icon" data-lucide="columns-3" aria-hidden="true"></i>REFLOW</span>
+                <strong>结构改变，关系重组</strong>
+                <span>当可读宽度不够时，列数、顺序或分组发生变化。</span>
+              </div>
+            </div>
+            <aside class="teaching-note">
+              <span class="teaching-note-mark">NOTE</span>
+              <p>响应式不是把固定画布整体缩小，而是让 <strong>available space</strong> 先改变，再由 <strong>readable width</strong>、信息关系和最低模块尺寸决定是否重组。</p>
+            </aside>
+            <div class="key-code">
+              <div class="code-header">
+                <span>layout.css</span>
+                <span class="code-language">CSS</span>
+              </div>
+              <p class="code-purpose" data-i18n-key="code-purpose-layout-css">用 CSS Grid 表达常规桌面结构，并在可读宽度不足时切换为单列。</p>
+              <pre><code data-code-key="layout-css">/* Keep the desktop relationship side by side. */
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Reflow when a module would become too narrow. */
+@media (max-width: 760px) {
+  .dashboard {
+    grid-template-columns: 1fr;
+  }
+}
+</code></pre>
+              <p class="code-caption">CSS 负责真实网页的 reflow；本实验使用 D3 把 layout state 之间的变化过程可视化。</p>
+              <div class="code-guide" data-i18n-key="code-guide-layout-css">阅读提示：这里的关键不是缩小所有模块，而是改变列关系来保护可读宽度。</div>
+            </div>
+            <div class="key-code">
+              <div class="code-header">
+                <span>responsive-lab.js</span>
+                <span class="code-language">JavaScript</span>
+              </div>
+              <p class="code-purpose" data-i18n-key="code-purpose-responsive-js">根据 viewport 状态计算模块坐标，再把状态变化画成可观察的重排。</p>
+              <pre><code data-code-key="responsive-lab">// Compute a topology-aware layout for the current width.
+const layout = computeLayout(viewportWidth);
+
+// Only coordinates change; the module identities stay stable.
+modules
+  .attr("x", d =&gt; layout[d.id].x)
+  .attr("y", d =&gt; layout[d.id].y);</code></pre>
+              <div class="code-guide" data-i18n-key="code-guide-responsive-js">阅读提示：computeLayout 决定结构，D3 只负责把结构变化呈现出来。</div>
+            </div>
+          </div>
+          <div class="wide">
+            <section class="visual-stage constraint-stage" aria-labelledby="constraint-lab-title">
+              <div class="stage-toolbar">
+                <div>
+                  <span class="component-label">THEORY LAB</span>
+                  <span id="constraint-lab-title" class="stage-name">Responsive Constraint Phase Diagram</span>
+                  <span class="constraint-stage-subtitle">Available space × readable width · feasibility model</span>
+                </div>
+                <div class="stage-actions">
+                  <span id="constraint-stage-status" class="stage-status">3 COLUMNS</span>
+                </div>
+              </div>
+
+              <div class="constraint-canvas">
+                <p class="constraint-intro">响应式布局的变化，本质上由<strong>可用空间</strong>和<strong>最小可读约束</strong>共同决定，而不是由设备名称决定。</p>
+                <p class="constraint-assumption">Available width + minimum readable module width + gap → <strong>feasible column count</strong>. Gap = 24px is an illustrative spacing assumption.</p>
+
+                <div class="constraint-controls" aria-label="Responsive constraint controls">
+                  <label class="constraint-range-control" for="constraint-available-width">
+                    <span>Available width <output id="constraint-available-width-value" for="constraint-available-width">900 px</output></span>
+                    <input id="constraint-available-width" class="form-range" type="range" min="360" max="1440" step="1" value="900" />
+                    <span class="constraint-range-scale"><span>360</span><span>1440</span></span>
+                  </label>
+                  <label class="constraint-range-control" for="constraint-minimum-width">
+                    <span>Minimum readable module width <output id="constraint-minimum-width-value" for="constraint-minimum-width">280 px</output></span>
+                    <input id="constraint-minimum-width" class="form-range" type="range" min="180" max="420" step="1" value="280" />
+                    <span class="constraint-range-scale"><span>180</span><span>420</span></span>
+                  </label>
+                  <div class="constraint-preset-group" role="group" aria-label="Responsive constraint presets">
+                    <span class="constraint-control-label">PRESET</span>
+                    <button class="stage-button constraint-preset" type="button" data-constraint-preset="spacious" aria-pressed="false">Spacious</button>
+                    <button class="stage-button constraint-preset" type="button" data-constraint-preset="tight" aria-pressed="false">Tight</button>
+                    <button class="stage-button constraint-preset" type="button" data-constraint-preset="dense" aria-pressed="false">Dense content</button>
+                  </div>
+                </div>
+
+                <div class="constraint-status" aria-live="polite">
+                  <span><b>CURRENT LAYOUT</b><strong id="constraint-current-layout">3 COLUMNS</strong></span>
+                  <span><b>LAST CHANGE</b><strong id="constraint-last-change">INITIAL</strong></span>
+                </div>
+
+                <div class="constraint-chart-frame">
+                  <svg id="constraint-phase-diagram" class="constraint-svg" role="img" aria-labelledby="constraint-phase-title constraint-phase-desc">
+                    <title id="constraint-phase-title">Responsive Constraint Phase Diagram</title>
+                    <desc id="constraint-phase-desc">A feasibility map relating available width and minimum readable module width to one through four possible columns.</desc>
+                  </svg>
+                </div>
+
+                <div id="constraint-boundary-detail" class="constraint-boundary-detail" aria-live="polite">
+                  <span class="component-label">FEASIBILITY BOUNDARY</span>
+                  <strong id="constraint-boundary-title">Hover a boundary</strong>
+                  <p id="constraint-boundary-copy">每条边界都来自可读宽度约束，而不是随机 breakpoint。</p>
+                </div>
+
+                <p id="constraint-insight" class="principles-insight constraint-insight" aria-live="polite">当前空间可以容纳三列；如果继续增加列数，模块会低于最低可读宽度，因此布局需要减少列数。</p>
+
+                <aside class="constraint-model-note">
+                  <span class="component-label">MODEL LIMITATION</span>
+                  <p>这是用于理解 <strong>constraint-driven reflow</strong> 的教学模型，不是所有真实网页都用同一个公式计算列数。真实布局还要同时考虑内容关系、固定控件与语义分组。</p>
+                </aside>
+
+                <div class="principles-key-idea constraint-key-idea">
+                  <span class="component-label">KEY IDEA</span>
+                  <code>const columns = Math.max(1, Math.min(4, Math.floor((availableWidth + gap) / (minimumWidth + gap))));</code>
+                  <span class="constraint-key-idea-caption">Available space ÷ minimum feasible module size → possible column count</span>
+                </div>
+
+                <div class="constraint-to-layout">
+                  <span class="component-label">FROM CONSTRAINT TO LAYOUT</span>
+                  <p>Phase Diagram 回答“何时应该<strong>改变布局结构</strong>？”下面的 Responsive Viewport Lab 则展示布局结构改变以后，页面具体怎样重排。</p>
+                </div>
+              </div>
+            </section>
+          </div>
+          <div class="wide">
+            <div class="visual-stage responsive-stage" data-stage="adapt">
+              <div class="stage-toolbar">
+                <div>
+                  <span class="component-label">INTERACTIVE DEMO</span>
+                  <span class="stage-name">Responsive Viewport Lab</span>
+                </div>
+                <div class="stage-actions">
+                  <span id="responsive-layout-mode" class="stage-status">WIDE</span>
+                  <button id="responsive-reset" class="stage-button" type="button">Reset</button>
+                </div>
+              </div>
+              <div class="responsive-canvas">
+                <div class="responsive-controls" aria-label="Responsive viewport controls">
+                  <div class="responsive-control-copy">
+                    <span class="component-label">VIEWPORT CONTROL</span>
+                    <label for="responsive-width">Viewport width <output id="responsive-width-value" for="responsive-width">1200 px</output></label>
+                    <p id="responsive-transition" aria-live="polite">Current transition: RESIZE</p>
+                  </div>
+                  <div class="responsive-range-wrap">
+                    <input id="responsive-width" class="responsive-slider" type="range" min="375" max="1440" step="1" value="1200" />
+                    <div class="responsive-range-scale" aria-hidden="true">
+                      <span>375</span>
+                      <span class="responsive-marker responsive-marker--medium">760</span>
+                      <span class="responsive-marker responsive-marker--wide">1100</span>
+                      <span>1440</span>
+                    </div>
+                  </div>
+                  <div class="responsive-presets" role="group" aria-label="Responsive layout presets">
+                    <button type="button" class="responsive-preset is-active" data-responsive-preset="wide" aria-pressed="true">Wide</button>
+                    <button type="button" class="responsive-preset" data-responsive-preset="medium" aria-pressed="false">Medium</button>
+                    <button type="button" class="responsive-preset" data-responsive-preset="narrow" aria-pressed="false">Narrow</button>
+                  </div>
+                  <label class="responsive-reading-toggle" for="responsive-reading-order">
+                    <input id="responsive-reading-order" type="checkbox" />
+                    <span>Reading order</span>
+                  </label>
+                </div>
+                <div class="responsive-metrics" aria-live="polite">
+                  <span><b>AVAILABLE WIDTH</b><strong id="responsive-available-width">1200 px</strong></span>
+                  <span><b>COLUMNS</b><strong id="responsive-columns">4</strong></span>
+                  <span><b>CONTENT TOPOLOGY</b><strong id="responsive-topology">side-by-side</strong></span>
+                  <span><b>PAGE LENGTH</b><strong id="responsive-page-length">1.0×</strong></span>
+                </div>
+                <div class="responsive-viewport-shell">
+                  <div class="responsive-viewport-header">
+                    <span>AVAILABLE WIDTH</span>
+                    <strong id="responsive-frame-width">1200 px</strong>
+                  </div>
+                  <div id="responsive-viewport-frame" class="responsive-viewport-frame">
+                    <div id="responsive-viewport-map" class="responsive-viewport-map" aria-label="Responsive Dashboard layout model"></div>
+                  </div>
+                </div>
+                <p id="responsive-insight" class="responsive-insight" aria-live="polite">At 1200px, the overview keeps four columns and the analysis modules share a side-by-side row.</p>
+                <p class="responsive-constraints">760 and 1100 are teaching thresholds: a constraint change is triggered when the current arrangement can no longer preserve readable width, grouping or hierarchy.</p>
+              </div>
+            </div>
+          </div>
+          <p class="transition-note section-transition">
+            Responsive Viewport Lab 让“结构改变”变得可见；最后还需要把诊断、层级、分组、分配和适配放回同一个案例，检查它们是否彼此支持。
+          </p>
+        </section>
+
+        <section id="surgery" class="chapter-section chapter-section-last" aria-labelledby="surgery-title">
+          <div class="section-heading">
+            <span class="section-motif section-motif--surgery" aria-hidden="true"></span>
+            <p class="section-index">06 / SURGERY</p>
+            <h2 id="surgery-title">把原则放回一个完整案例</h2>
+          <p class="section-summary"><strong>综合重构</strong>，让诊断、层级、分组、空间与响应共同工作。</p>
+          </div>
+          <div class="prose section-copy">
+            <p>
+              最终的布局不是一组孤立技巧的叠加，而是一套<strong>相互支持的关系</strong>。我们会回到最初那个 Dashboard，保留数据和图表本身，重新安排它们出现的<strong>顺序、密度和空间位置</strong>。
+            </p>
+            <article class="explanation-block">
+              <div class="concept-heading">
+                <i class="semantic-icon" data-lucide="workflow" aria-hidden="true"></i>
+                <div>
+                  <p class="component-label">EXPLANATION</p>
+                  <h3>重构的目标是减少解释成本</h3>
+                </div>
+              </div>
+              <p>
+                当<strong>视觉层级和空间关系</strong>足够明确，用户可以<strong>把注意力留给数据本身</strong>。布局的完成，不是页面看起来更满，而是每一次停顿都有理由。
+              </p>
+            </article>
+            <div class="surgery-arc" aria-label="综合重构的三步逻辑">
+              <div>
+                <div class="graphic-visual graphic-visual--observe" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+                <span>01</span><strong>Observe</strong><small>先保留证据</small>
+              </div>
+              <div>
+                <div class="graphic-visual graphic-visual--reframe" aria-hidden="true"><span></span><span></span><i></i></div>
+                <span>02</span><strong>Reframe</strong><small>重新判断关系</small>
+              </div>
+              <div>
+                <div class="graphic-visual graphic-visual--recompose" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+                <span>03</span><strong>Recompose</strong><small>组织成可读结构</small>
+              </div>
+            </div>
+            <div class="key-code surgery-key-code">
+              <div class="code-header">
+                <span>layout-surgery.js</span>
+                <span class="code-language">JavaScript</span>
+              </div>
+              <p class="code-purpose" data-i18n-key="code-purpose-surgery">把前面形成的设计判断保存为不同 state，再用一次过渡展示重构过程。</p>
+              <pre><code data-code-key="layout-surgery">// The current step selects one measured layout state.
+const state = surgeryStates[currentStep];
+
+// Preserve module identity while moving its spatial properties.
+modules
+  .interrupt()
+  .transition()
+  .duration(600)
+  .attr("x", d =&gt; state[d.id].x)
+  .attr("y", d =&gt; state[d.id].y)
+  .attr("width", d =&gt; state[d.id].width)
+  .attr("height", d =&gt; state[d.id].height);</code></pre>
+              <p class="code-caption">前面的设计分析决定 target state，D3 负责把不同空间状态之间的变化可视化。</p>
+              <div class="code-guide" data-i18n-key="code-guide-surgery">阅读提示：变化的是位置和尺寸，不是数据；这正是布局重构的可视化过程。</div>
+            </div>
+          </div>
+          <div class="wide">
+            <div class="visual-stage surgery-stage" data-stage="surgery">
+              <div class="stage-toolbar">
+                <div>
+                  <span class="component-label">INTERACTIVE DEMO</span>
+                  <span class="stage-name">Layout Surgery</span>
+                  <span class="surgery-stage-subtitle">从图表堆砌到清晰的信息结构 · From visual clutter to structured layout</span>
+                </div>
+                <div class="stage-actions">
+                  <span id="surgery-stage-status" class="stage-status" aria-live="polite">INITIAL</span>
+                  <button id="surgery-reset" class="stage-button" type="button">Reset</button>
+                </div>
+              </div>
+              <div class="surgery-canvas-area">
+                <nav class="surgery-stepper" aria-label="Layout Surgery steps">
+                  <ol>
+                    <li><button type="button" data-surgery-step="0" aria-current="step">01 <span>Initial</span></button></li>
+                    <li><button type="button" data-surgery-step="1">02 <span>Diagnose</span></button></li>
+                    <li><button type="button" data-surgery-step="2">03 <span>Prioritize</span></button></li>
+                    <li><button type="button" data-surgery-step="3">04 <span>Group</span></button></li>
+                    <li><button type="button" data-surgery-step="4">05 <span>Allocate</span></button></li>
+                    <li><button type="button" data-surgery-step="5">06 <span>Adapt</span></button></li>
+                    <li><button type="button" data-surgery-step="6">07 <span>Final</span></button></li>
+                  </ol>
+                </nav>
+                <section class="surgery-narrative" aria-live="polite" aria-labelledby="surgery-narrative-title">
+                  <div class="surgery-narrative-heading">
+                    <span id="surgery-step-kicker" class="component-label">STEP 01</span>
+                    <h3 id="surgery-narrative-title">INITIAL</h3>
+                  </div>
+                  <div class="surgery-narrative-grid">
+                    <div><span>Principle</span><p id="surgery-principle">先观察真实的空间结构。</p></div>
+                    <div><span>Change</span><p id="surgery-change">保留初始 Dashboard，不修改任何模块。</p></div>
+                    <div><span>Why</span><p id="surgery-reason">图表没有明显错误，但页面关系仍然混乱。</p></div>
+                  </div>
+                </section>
+                <div class="surgery-control-row">
+                  <div class="surgery-view-toggle" role="group" aria-label="Before and After view">
+                    <span class="surgery-control-label">VIEW</span>
+                    <button class="surgery-toggle-button is-active" type="button" data-surgery-view="before" aria-pressed="true">Before</button>
+                    <button class="surgery-toggle-button" type="button" data-surgery-view="after" aria-pressed="false">After</button>
+                  </div>
+                  <div id="surgery-viewport-controls" class="surgery-viewport-controls" role="group" aria-label="Surgery viewport" hidden>
+                    <span class="surgery-control-label">VIEWPORT</span>
+                    <button class="surgery-viewport-button is-active" type="button" data-surgery-viewport="wide" aria-pressed="true">Wide</button>
+                    <button class="surgery-viewport-button" type="button" data-surgery-viewport="medium" aria-pressed="false">Medium</button>
+                    <button class="surgery-viewport-button" type="button" data-surgery-viewport="narrow" aria-pressed="false">Narrow</button>
+                  </div>
+                  <div class="surgery-navigation">
+                    <button id="surgery-previous" class="stage-button" type="button">Previous</button>
+                    <button id="surgery-next" class="stage-button" type="button">Next</button>
+                  </div>
+                </div>
+                <div id="surgery-canvas" class="surgery-canvas" aria-label="Layout Surgery Dashboard model"></div>
+                <p id="surgery-canvas-note" class="surgery-canvas-note">Initial state uses the measured layout of the real Dashboard above.</p>
+                <section id="surgery-summary" class="surgery-summary" aria-labelledby="surgery-summary-title" hidden>
+                  <div>
+                    <span class="component-label">CHANGE SUMMARY</span>
+                    <h3 id="surgery-summary-title">One possible improved layout</h3>
+                  </div>
+                  <ul>
+                    <li><strong>Visual hierarchy</strong><span>重要信息获得更明确的视觉权重。</span></li>
+                    <li><strong>Semantic grouping</strong><span>相关模块形成更清晰的空间分组。</span></li>
+                    <li><strong>Responsive structure</strong><span>布局可以在不同可用宽度下重新组织。</span></li>
+                    <li><strong>Consistent rhythm</strong><span>对齐与间距更加统一。</span></li>
+                  </ul>
+                </section>
+              </div>
+            </div>
+          </div>
+          <p class="transition-note section-transition surgery-transition">
+            Layout Surgery 把前面的原则串成一个连续过程；Final Dashboard 不是另一份数据，而是<strong>同一案例</strong>在这些判断之后形成的结果。
+          </p>
+
+          <section class="wide final-result" aria-labelledby="final-result-title">
+            <div class="final-result-heading">
+              <span class="component-label">FINAL RESULT</span>
+              <h3 id="final-result-title">Final Dashboard</h3>
+              <p>
+                <strong>相同的数据与图表</strong>，通过重新组织层级、分组与空间关系，形成<strong>更清晰的页面结构</strong>。<br />
+                Same data and visualizations, reorganized with clearer hierarchy, grouping and spacing.
+              </p>
+            </div>
+            <div class="visual-stage dashboard-stage dashboard-stage--final" data-stage="final-dashboard">
+              <div class="stage-toolbar">
+                <div>
+                  <span class="component-label">INTERACTIVE DEMO</span>
+                  <span class="stage-name">Final Dashboard</span>
+                </div>
+                <div class="xray-toolbar-controls">
+                  <span class="dashboard-case-label">CASE / FINAL STATE</span>
+                  <button id="final-xray-toggle" class="stage-button xray-toggle" type="button" aria-pressed="false">X-Ray</button>
+                  <fieldset id="final-xray-options" class="xray-options" disabled>
+                    <legend class="visually-hidden">Layout X-Ray layers</legend>
+                    <label class="xray-option"><input id="final-xray-bounds" type="checkbox" checked /> <span>Bounds</span></label>
+                    <label class="xray-option"><input id="final-xray-alignment" type="checkbox" /> <span>Alignment</span></label>
+                    <label class="xray-option"><input id="final-xray-spacing" type="checkbox" /> <span>Spacing</span></label>
+                    <label class="xray-option"><input id="final-xray-groups" type="checkbox" /> <span>Groups</span></label>
+                    <label class="xray-option"><input id="final-xray-reading-order" type="checkbox" /> <span>Reading order</span></label>
+                  </fieldset>
+                  <button id="final-xray-reset" class="stage-button" type="button">Reset</button>
+                </div>
+              </div>
+              <aside id="final-xray-inspect" class="xray-inspect-panel" hidden>
+                <span class="xray-inspect-label">INSPECT</span>
+                <span id="final-xray-inspect-content">Hover a module to inspect its layout.</span>
+              </aside>
+              <div class="dashboard-canvas dashboard-canvas--final">
+                <div class="dashboard-shell dashboard-shell--final" data-dashboard-instance="final">
+                <header id="final-dashboard-header" class="dashboard-header" data-module-id="dashboard-header" data-module-label="Dashboard 标题">
+                  <div>
+                    <p class="dashboard-kicker">FRESHMAN SNAPSHOT</p>
+                    <h3>2026 新生画像</h3>
+                    <p class="dashboard-subtitle">Freshman Snapshot</p>
+                  </div>
+                  <p class="dashboard-meta">Illustrative data<br />示例数据</p>
+                </header>
+
+                <form id="final-filters" class="dashboard-filters" data-module-id="filters" data-module-label="筛选器">
+                  <div class="filter-field">
+                    <label for="final-dashboard-region">Region</label>
+                    <select id="final-dashboard-region" name="region">
+                      <option value="all">All regions / 全部地区</option>
+                      <option value="华东">华东</option>
+                      <option value="华北">华北</option>
+                      <option value="华中">华中</option>
+                      <option value="华南">华南</option>
+                      <option value="西南">西南</option>
+                      <option value="西北">西北</option>
+                      <option value="东北">东北</option>
+                    </select>
+                  </div>
+                  <div class="filter-field">
+                    <label for="final-dashboard-major-group">Major group</label>
+                    <select id="final-dashboard-major-group" name="majorGroup">
+                      <option value="all">All groups / 全部专业大类</option>
+                      <option value="computer">计算机类</option>
+                      <option value="intelligent">智能科学类</option>
+                      <option value="automation">自动化类</option>
+                      <option value="electronic">电子信息类</option>
+                      <option value="math">数理类</option>
+                    </select>
+                  </div>
+                  <p id="final-dashboard-filter-status" class="filter-status" data-dashboard-filter-status aria-live="polite">当前视图：全部地区 · 全部专业大类</p>
+                </form>
+
+                <div class="dashboard-kpis">
+                  <article id="final-kpi-total" class="dashboard-kpi dashboard-kpi--primary" data-module-id="kpi-total" data-module-label="新生总数">
+                    <span>新生总数</span>
+                    <strong id="final-metric-total" data-dashboard-metric="total">1,432</strong>
+                    <small id="final-metric-total-note" data-dashboard-metric-note="total">All regions</small>
+                  </article>
+                  <article id="final-kpi-major" class="dashboard-kpi" data-module-id="kpi-major" data-module-label="专业数量">
+                    <span>专业数量</span>
+                    <strong id="final-metric-major" data-dashboard-metric="major">8</strong>
+                    <small>undergraduate majors</small>
+                  </article>
+                  <article id="final-kpi-region" class="dashboard-kpi" data-module-id="kpi-region" data-module-label="生源区域数量">
+                    <span>生源区域</span>
+                    <strong id="final-metric-region" data-dashboard-metric="region">7</strong>
+                    <small id="final-metric-region-note" data-dashboard-metric-note="region">regions represented</small>
+                  </article>
+                  <article id="final-kpi-checkin" class="dashboard-kpi" data-module-id="kpi-checkin" data-module-label="准备完成率">
+                    <span>准备完成率</span>
+                    <strong id="final-metric-checkin" data-dashboard-metric="checkin">93.6%</strong>
+                    <small>registration readiness</small>
+                  </article>
+                </div>
+
+                <div class="dashboard-visual-grid">
+                  <article id="final-chart-major" class="dashboard-panel dashboard-panel--major" data-module-id="chart-major" data-module-label="专业构成">
+                    <div class="panel-heading">
+                      <div>
+                        <span class="panel-index">01</span>
+                        <h4>专业构成</h4>
+                      </div>
+                      <span class="panel-meta">STUDENTS</span>
+                    </div>
+                    <div id="final-major-treemap" class="chart-host" data-dashboard-chart="treemap" aria-label="专业人数 Treemap"></div>
+                  </article>
+
+                  <article id="final-chart-progress" class="dashboard-panel dashboard-panel--progress" data-module-id="chart-progress" data-module-label="入学准备完成度">
+                    <div class="panel-heading">
+                      <div>
+                        <span class="panel-index">03</span>
+                        <h4>入学准备完成度</h4>
+                      </div>
+                      <span class="panel-meta">PERCENT</span>
+                    </div>
+                    <div id="final-progress-dotplot" class="chart-host" data-dashboard-chart="dotplot" aria-label="各专业入学准备完成度 Dot Plot"></div>
+                  </article>
+
+                  <article id="final-chart-region" class="dashboard-panel dashboard-panel--region" data-module-id="chart-region" data-module-label="地区与专业大类">
+                    <div class="panel-heading">
+                      <div>
+                        <span class="panel-index">02</span>
+                        <h4>生源地区 × 专业大类</h4>
+                      </div>
+                      <span class="panel-meta">STUDENTS</span>
+                    </div>
+                    <div class="dashboard-heatmap-body">
+                      <div id="final-region-heatmap" class="chart-host" data-dashboard-chart="heatmap" aria-label="地区与专业大类 Heatmap"></div>
+                      <aside id="final-legend-region" class="dashboard-legend" data-module-id="legend-region" data-module-label="地区图例">
+                        <span class="legend-title">人数密度</span>
+                        <div id="final-region-legend-scale" class="legend-scale" data-dashboard-legend-scale aria-hidden="true"></div>
+                        <div class="legend-values"><span>0</span><span id="final-legend-max" data-dashboard-legend-max>—</span></div>
+                        <p>颜色越深，代表该组合中的示例人数越多。</p>
+                      </aside>
+                    </div>
+                  </article>
+                </div>
+
+                <aside id="final-dashboard-note" class="dashboard-note" data-module-id="dashboard-note" data-module-label="Dashboard 说明">
+                  <span class="dashboard-note-label">READING NOTE</span>
+                  <p>相同的数据与图表，通过重新组织层级、分组与空间关系，形成更清晰的页面结构。</p>
+                </aside>
+                <div id="final-dashboard-error" class="dashboard-error" role="status" hidden></div>
+                <svg id="final-dashboard-xray-overlay" class="dashboard-xray-overlay" aria-hidden="true" preserveAspectRatio="none"></svg>
+              </div>
+              </div>
+            </div>
+            <p class="transition-note final-result-transition">
+              结果页需要回答的不是“改了多少”，而是“<strong>为什么现在更容易读</strong>”；下面的说明把这种变化收束成四个可检查的判断。
+            </p>
+            <div class="final-result-notes" aria-labelledby="final-result-notes-title">
+              <div>
+                <span class="component-label">RESULT NOTES</span>
+                <h3 id="final-result-notes-title">Why this layout is clearer</h3>
+              </div>
+              <ul>
+                <li><strong>Visual hierarchy</strong><span>专业构成获得与重要性更匹配的视觉空间。</span></li>
+                <li><strong>Grouping</strong><span>Heatmap 与 legend 形成紧密信息组。</span></li>
+                <li><strong>Consistency</strong><span>KPI、边界与间距建立统一节奏。</span></li>
+                <li><strong>Responsive</strong><span>真实 CSS 布局可根据可用空间重新组织。</span></li>
+              </ul>
+            </div>
+          </section>
+          <aside class="chapter-closure" aria-label="本章总结">
+            <div class="chapter-closure-content">
+              <i class="semantic-icon" data-lucide="panels-top-left" aria-hidden="true"></i>
+              <div>
+                <span class="component-label">CHAPTER TAKEAWAY</span>
+                <p>页面布局不是把模块摆得更整齐，而是让<strong>层级、分组、空间和响应</strong>共同支持一条清晰的阅读路径。</p>
+              </div>
+            </div>
+          </aside>
+        </section>
+
+        <footer class="site-footer">
+          <span>VIS / 06</span>
+          <span>Designing Page Layouts for Visualization</span>
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>
